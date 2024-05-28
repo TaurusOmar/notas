@@ -1,6 +1,6 @@
 # Establecer presencia via Inyección en DLLs #1
 
-Cunado hablamos de establecer presencia se refiere a la fase en la que los miembros del Red Team aseguran un acceso persistente a los sistemas y redes comprometidos. 
+Cuando hablamos de establecer presencia se refiere a la fase en la que los miembros del Red Team aseguran un acceso persistente a los sistemas y redes comprometidos. 
 Esta etapa es crucial para garantizar que el equipo pueda mantener su acceso incluso si se reinician los sistemas, se aplican parches o se toman medidas 
 de seguridad adicionales. Establecer presencia implica varias actividades, entre las cuales pueden inluciur:
 
