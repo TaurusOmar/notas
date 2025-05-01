@@ -31,7 +31,6 @@
 * Añade `-WindowStyle Hidden` si necesitas que la ventana de PowerShell quede oculta.  
 * La versión **EXE** de tu herramienta (p.e. *winPEAS.exe*) suele evitar todas estas trabas.
 
-> ⚠️ **Uso responsable:** Emplea estas técnicas únicamente en sistemas donde tengas autorización explícita. El abuso de *living-off-the-land* sin permiso puede violar políticas internas y la legislación vigente.
 
 
 ```powershell
